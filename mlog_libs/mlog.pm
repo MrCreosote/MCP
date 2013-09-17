@@ -1,14 +1,10 @@
 package mlog;
 
-@ISA = qw(Exporter);
-@EXPORT = qw(init_mlog get_log_level update_config set_log_level set_log_file set_log_msg_check_count set_log_msg_check_interval clear_user_log_level logit);
-
 use strict;
 use warnings;
 use Config::Simple;
 use LWP::Simple;
 use JSON qw( decode_json );
-use DateTime;
 use Cwd 'abs_path';
 use Data::Dumper;
 use Sys::Hostname;
@@ -16,8 +12,6 @@ use List::Util qw[min max];
 use Time::HiRes;
 
 use Sys::Syslog qw( :DEFAULT setlogsock);
-
-require Exporter;
 
 # $ENV{'MLOG_CONFIG_FILE'} should point to an INI-formatted file, or an empty string, or should not exist.
 our $MLOG_CONFIG_FILE_DEFAULT = "/etc/mlog/mlog.conf";
@@ -110,7 +104,7 @@ config file)
 mlog->new(string subsystem, hashref constraints): Create a new mlog instance.
 Constraints are optional.
 
-logit(int level, string message): sends log message to syslog.
+log_message(int level, string message): sends log message to syslog.
 
 =over 10
 
@@ -232,9 +226,9 @@ sub new {
 
 sub _get_time_since_start {
     my ($self) = @_;
-    my $now = DateTime->now( time_zone => 'local' )->set_time_zone('floating');
-    my $seconds_duration = $now->subtract_datetime_absolute($self->{_time_at_config_update});
-    return $seconds_duration->seconds;
+    my $now = time;
+    my $seconds_duration = $now - $self->{_time_at_config_update};
+    return $seconds_duration;
 }
 
 sub get_log_level {
@@ -257,7 +251,7 @@ sub update_config {
     
     $self->{_api_log_level} = -1;
     $self->{_msgs_since_config_update} = 0;
-    $self->{_time_at_config_update} = DateTime->now( time_zone => 'local' )->set_time_zone('floating');
+    $self->{_time_at_config_update} = time;
     
     # Retrieving config variables.
     my $api_url = "";
@@ -418,7 +412,7 @@ sub _log {
     close LOG;
 }
 
-sub logit {
+sub log_message {
     my ($self, $level, $message, $authuser, $module, $method, $call_id) = @_;
     $level = $self->_resolve_log_level($level);
 
