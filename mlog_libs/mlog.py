@@ -10,7 +10,7 @@ METHODS
            should call this at the beginning of your program. Constraints are
            optional.
 
-       logit(int level, string message): sends log message to syslog.
+       log_message(int level, string message): sends log message to syslog.
 
        *         level: (0-9) The logging level for this message is compared to
                     the logging level that has been set in mlog.  If it is <=
@@ -69,7 +69,6 @@ METHODS
 import json as _json
 import urllib2 as _urllib2
 import syslog as _syslog
-import datetime as _datetime
 import platform as _platform
 import inspect as _inspect
 import os as _os
@@ -155,7 +154,7 @@ class mlog(object):
         self._config_log_file = None
         self._api_log_level = -1
         self._msgs_since_config_update = 0
-        self._time_at_config_update = _datetime.datetime.now()
+        self._time_at_config_update = time.time()
         self.msg_count = 0
         self._recheck_api_msg = 100
         self._recheck_api_time = 300  # 5 mins
@@ -166,8 +165,8 @@ class mlog(object):
         self._init = False
 
     def _get_time_since_start(self):
-        time_diff = _datetime.datetime.now() - self._time_at_config_update
-        return (time_diff.days * 24 * 60 * 60) + time_diff.seconds
+        time_diff = time.time() - self._time_at_config_update
+        return time_diff
 
     def get_log_level(self):
         if(self._user_log_level != -1):
@@ -192,7 +191,7 @@ class mlog(object):
 
         self._api_log_level = -1
         self._msgs_since_config_update = 0
-        self._time_at_config_update = _datetime.datetime.now()
+        self._time_at_config_update = time.time()
 
         # Retrieving the control API defined log level
         api_url = None
@@ -319,7 +318,7 @@ class mlog(object):
         _syslog.closelog()
 
     def _log(self, ident, message):
-        ident = ' '.join([str(_datetime.datetime.now().replace(microsecond=0)),
+        ident = ' '.join([str(time.time().replace(microsecond=0)),
                         _platform.node(), ident + ': '])
         try:
             with open(self.get_log_file(), 'a') as log:
@@ -336,7 +335,7 @@ class mlog(object):
                 ': ' + str(e) + '.'
             _warnings.warn(err)
 
-    def logit(self, level, message, authuser=None, module=None, method=None,
+    def log_message(self, level, message, authuser=None, module=None, method=None,
               call_id=None):
 #        message = str(message)
         level = self._resolve_log_level(level)
