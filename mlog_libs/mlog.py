@@ -135,6 +135,8 @@ class mlog(object):
         if not subsystem:
             raise ValueError("Subsystem must be supplied")
 
+        self.user = _getpass.getuser()
+        self.parentfile = _os.path.abspath(_inspect.getfile(_inspect.stack()[1][0]))
         self.authuser = authuser
         self.module = module
         self.method = method
@@ -291,10 +293,10 @@ class mlog(object):
         self._user_log_level = -1
         self._callback()
 
-    def _get_ident(self, level, user, file_, authuser, module, method,
+    def _get_ident(self, level, user, parentfile, authuser, module, method,
                    call_id):
         infos = [self._subsystem, _MLOG_LEVEL_TO_TEXT[level],
-                 repr(time.time()), user, file_, str(_os.getpid())]
+                 repr(time.time()), user, parentfile, str(_os.getpid())]
         if self.authuser:
             infos.append(str(authuser) if authuser else '-')
         if self.module:
@@ -318,7 +320,7 @@ class mlog(object):
         _syslog.closelog()
 
     def _log(self, ident, message):
-        ident = ' '.join([str(time.time().replace(microsecond=0)),
+        ident = ' '.join([str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())),
                         _platform.node(), ident + ': '])
         try:
             with open(self.get_log_file(), 'a') as log:
@@ -343,14 +345,11 @@ class mlog(object):
         self.msg_count += 1
         self._msgs_since_config_update += 1
 
-        user = _getpass.getuser()
-        file_ = _os.path.abspath(_inspect.getfile(_inspect.stack()[1][0]))
-
         if(self._msgs_since_config_update >= self._recheck_api_msg
            or self._get_time_since_start() >= self._recheck_api_time):
             self.update_config()
 
-        ident = self._get_ident(level, user, file_, authuser, module, method,
+        ident = self._get_ident(level, self.user, self.parentfile, authuser, module, method,
                                 call_id)
         # If this message is an emergency, send a copy to the emergency
         # facility first.
