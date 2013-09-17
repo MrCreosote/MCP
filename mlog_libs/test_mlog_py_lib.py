@@ -23,6 +23,7 @@ m.log_message(4, "my test message at log level 4 with constraints job=3 and stag
 
 ################################################################################
 
+m.set_log_file("foo")
 m.set_log_level(5)
 print "log_level = " + str(m.get_log_level())
 
