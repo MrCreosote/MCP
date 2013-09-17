@@ -307,7 +307,7 @@ class mlog(object):
         return "[" + "] [".join(infos) + "]"
 
     def _syslog(self, facility, level, ident, message):
-        _syslog.openlog(ident, facility=facility)
+        _syslog.openlog(ident, facility)
         if isinstance(message, basestring):
             _syslog.syslog(_MLOG_TO_SYSLOG[level], message)
         else:
